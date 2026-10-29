@@ -1,0 +1,26 @@
+.portfolio-disclosure { max-width: 65ch; margin: 0 auto 24px; text-align: center; font-size: 12px; line-height: 1.6; }
+.portfolio-editorial-frame { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; animation: portfolio-reveal 200ms ease-out both; }
+.portfolio-editorial-image { display: block; min-width: 0; padding: 0; border: 0; background: transparent; }
+.portfolio-editorial-image:first-child { grid-column: 1 / -1; }
+.portfolio-editorial-image .photo { aspect-ratio: 1; }
+.portfolio-editorial-image:first-child .photo { aspect-ratio: 4 / 5; }
+.portfolio-editorial-image img { object-fit: cover; object-position: var(--portfolio-position, center); }
+.portfolio-editorial-lightbox .modal-close { background: var(--color-marfim); color: var(--color-espresso); min-width: 44px; min-height: 44px; }
+.portfolio-editorial-lightbox > .photo { height: 72dvh; }
+.portfolio-editorial-controls { display: flex; justify-content: space-between; margin-top: 16px; }
+.contact-cta.contact-cta--centered.contact-cta--portfolio { padding-block: 40px; }
+.contact-cta.contact-cta--centered.contact-cta--portfolio > div { max-width: 48rem; }
+.contact-cta.contact-cta--centered.contact-cta--portfolio h2 { font-size: clamp(32px, 3.8vw, 48px); }
+.contact-cta.contact-cta--centered.contact-cta--portfolio p { font-size: 18px; }
+@keyframes portfolio-reveal { from { opacity: 0; } to { opacity: 1; } }
+@media (min-width: 768px) {
+  /* 5H/4 = feature width; secondary width = (H - gap)/2. */
+  .portfolio-editorial-frame { grid-template-columns: minmax(0, calc((100% - 24px) * 4 / 9)) repeat(2, minmax(0, 1fr)); gap: 24px; }
+  .portfolio-editorial-image:first-child { grid-column: 1; grid-row: 1 / 3; }
+  .portfolio-editorial-image:nth-child(2) { grid-column: 2; grid-row: 1; }
+  .portfolio-editorial-image:nth-child(3) { grid-column: 3; grid-row: 1; }
+  .portfolio-editorial-image:nth-child(4) { grid-column: 2; grid-row: 2; }
+  .portfolio-editorial-image:nth-child(5) { grid-column: 3; grid-row: 2; }
+  .contact-cta.contact-cta--centered.contact-cta--portfolio { padding-block: 48px; }
+}
+@media (prefers-reduced-motion: reduce) { .portfolio-editorial-frame { animation: none; } }

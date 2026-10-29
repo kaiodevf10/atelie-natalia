@@ -1,0 +1,27 @@
+# Dependências
+node_modules/
+
+# Build
+dist/
+*.tsbuildinfo
+
+# Cache
+.npm-cache/
+.vite/
+
+# Variáveis de ambiente
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Arquivos locais
+.DS_Store
+Thumbs.db
+
+# Deploy
+.vercel/
+.netlify/

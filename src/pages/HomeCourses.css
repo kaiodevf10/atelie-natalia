@@ -1,0 +1,23 @@
+/* Home course feature: isolated from the course page hero. */
+.home-courses { display: grid; align-items: center; gap: 32px; margin: 24px clamp(16px, 2.1vw, 32px) 0; padding: 48px 24px 32px; border-radius: 24px; background: var(--color-marfim); }
+.home-courses > * { min-width: 0; }
+.home-courses-visual { position: relative; width: 100%; max-width: 640px; margin-inline: auto; padding: clamp(16px, 1.85vw, 28px); border-radius: 24px; background: var(--color-marfim); aspect-ratio: 1; }
+.home-courses-label { grid-column: 1 / -1; justify-self: center; color: var(--color-espresso); font-size: 18px; font-weight: 400; line-height: 1.5; text-align: center; }
+.home-courses-palette { position: absolute; inset: clamp(16px, 1.85vw, 28px); display: grid; grid-template-columns: 1.2fr 1fr; grid-template-rows: repeat(2, minmax(0, 1fr)); gap: clamp(12px, 1.3vw, 20px); }
+.home-courses-swatch { min-width: 0; border-radius: 16px; }
+.home-courses-swatch--rose { grid-row: 1 / -1; display: flex; align-items: flex-end; padding: 16px; background: #C99288; color: var(--color-marfim); font-size: clamp(16px, 1.3vw, 20px); line-height: 1.5; }
+.home-courses-swatch--beige { background: #E5D3C6; }
+.home-courses-swatch--espresso { background: var(--color-espresso); }
+.home-courses-copy { width: 100%; max-width: 640px; margin-inline: auto; }
+.home-courses h2 { max-width: 600px; font-size: clamp(36px, 5.2vw, 42px); font-weight: 400; line-height: 1.1; text-wrap: pretty; }
+.home-courses p { max-width: 600px; margin: 24px 0 0; font-size: 18px; line-height: 1.7; color: var(--color-espresso); }
+.home-courses .button { margin-top: 32px; padding: 16px 24px; border-radius: 12px; font-size: 18px; font-weight: 400; }
+@media (min-width: 768px) {
+  .home-courses { padding: 56px 40px 40px; gap: 32px; }
+}
+@media (min-width: 1024px) {
+  .home-courses { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); column-gap: clamp(40px, 4.6vw, 72px); row-gap: 32px; padding: clamp(40px, 3.65vw, 56px); }
+  .home-courses h2 { font-size: clamp(44px, 4.17vw, 64px); }
+  .home-courses p { margin-top: 32px; font-size: clamp(20px, 1.57vw, 24px); }
+  .home-courses .button { margin-top: 64px; padding-inline: 32px; font-size: 20px; }
+}

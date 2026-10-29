@@ -1,0 +1,44 @@
+import { useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import type { FieldPath } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import { services, makeupStyles, hairStyles } from '../../data/content';
+import { bookingSchema, initialBooking, localToday, bookingRows, formatBookingMessage } from './model';
+import type { Booking } from './model';
+import { WhatsAppCTA } from '../../components/ui';
+const steps = ['Seu serviço', 'Seu estilo', 'Referências visuais', 'Data e local', 'Sobre você', 'Revisão', 'Sua mensagem'];
+export default function BookingWizard() {
+    const [params] = useSearchParams();
+    const preselected = services.find(s => s.id === params.get('servico'))?.id;
+    const [step, setStep] = useState(0);
+    const titleRef = useRef<HTMLHeadingElement>(null);
+    const { register, watch, trigger, formState: { errors } } = useForm<Booking>({ resolver: zodResolver(bookingSchema), defaultValues: { ...initialBooking, service: preselected ?? 'maquiagem' } });
+    const data = watch();
+    const bride = data.service === 'noiva';
+    const hasMakeup = data.service !== 'penteado';
+    const hasHair = data.service !== 'maquiagem';
+    const fieldsByStep: FieldPath<Booking>[][] = [['service'], [...(hasMakeup ? ['makeup' as const] : []), ...(hasHair ? ['hair' as const] : []), ...(!bride && hasMakeup ? ['occasion' as const] : []), ...(bride ? ['people' as const] : [])], ['references'], ['date', 'location'], ['name', 'phone'], [], []];
+    function move(next: number) { setStep(next); setTimeout(() => titleRef.current?.focus(), 0); }
+    async function next() { if (step === 5) {
+        if (await trigger())
+            move(6);
+        else
+            move(1);
+    }
+    else if (await trigger(fieldsByStep[step], { shouldFocus: true }))
+        move(step + 1); }
+    function error(name: FieldPath<Booking>) { return errors[name] ? <span className="field-error" id={`${name}-error`} role="alert">{errors[name]?.message}</span> : null; }
+    function input(name: FieldPath<Booking>, label: string, type = 'text', required = false) { return <label className="field" key={name}><span id={`${name}-label`}>{label}{required ? ' *' : ''}</span><input aria-labelledby={`${name}-label`} {...register(name)} type={type} min={type === 'date' ? localToday() : type === 'number' ? 1 : undefined} aria-invalid={Boolean(errors[name])} aria-describedby={errors[name] ? `${name}-error` : undefined}/>{error(name)}</label>; }
+    function choices(name: 'makeup' | 'hair', label: string, options: string[]) { return <fieldset className="choice-field"><legend>{label} *</legend><div className="choice-grid">{options.map(option => <label className={`style-option ${data[name] === option ? 'selected' : ''}`} key={option}><input {...register(name)} type="radio" value={option}/>{option}{data[name] === option && <Check size={16}/>}</label>)}</div>{error(name)}</fieldset>; }
+    return <div className="booking-layout"><aside className="booking-aside"><span className="eyebrow">Um cuidado pensado para você</span><h1>Vamos preparar <br />o seu momento?</h1><p>Algumas escolhas para a equipe conhecer seu estilo e entender o que você precisa.</p><ol className="step-list">{steps.map((s, i) => <li key={s} className={i === step ? 'current' : i < step ? 'done' : ''} aria-current={i === step ? 'step' : undefined}><span>{i < step ? <Check size={14}/> : i + 1}</span>{s}</li>)}</ol><p className="aside-note">Seu pedido não confirma uma reserva. A disponibilidade será consultada com a equipe.</p></aside><section className="wizard"><div className="wizard-progress"><span>Etapa {step + 1} de {steps.length}</span><span>{Math.round((step + 1) / steps.length * 100)}%</span></div><div className="progress-track"><div style={{ width: `${(step + 1) / steps.length * 100}%` }}/></div><h2 ref={titleRef} tabIndex={-1}>{steps[step]}</h2><form onSubmit={e => { e.preventDefault(); void next(); }} noValidate>
+ {step === 0 && <><p>Qual serviço acompanha o seu momento?</p><div className="service-options">{services.map(service => <label className={`selection-card ${data.service === service.id ? 'selected' : ''}`} key={service.id}><input type="radio" {...register('service')} value={service.id}/><span><strong>{service.name}</strong><small>{service.description}</small></span><span className="radio-mark">{data.service === service.id && <Check size={14}/>}</span></label>)}</div></>}
+ {step === 1 && <div className="form-stack">{bride && <p>Conte como imagina a sua produção. A data e os horários serão informados na próxima etapa.</p>}{!bride && hasMakeup && <label className="field"><span id="occasion-label">Qual é a ocasião? *</span><select aria-labelledby="occasion-label" {...register('occasion')} aria-invalid={Boolean(errors.occasion)}><option value="">Selecione a ocasião</option>{['Festa', 'Formatura', 'Casamento como convidada', 'Ensaio fotográfico', 'Outra'].map(x => <option key={x}>{x}</option>)}</select>{error('occasion')}</label>}{hasMakeup && choices('makeup', 'Como você imagina sua maquiagem?', makeupStyles)}{hasHair && choices('hair', 'Qual estilo de penteado você prefere?', hairStyles)}{hasHair && <label className="field"><span id="length-label">Comprimento aproximado do cabelo</span><select aria-labelledby="length-label" {...register('length')}><option value="">Prefiro informar depois</option>{['Curto', 'Médio', 'Longo'].map(x => <option key={x}>{x}</option>)}</select></label>}{bride && <>{input('people', 'Quantidade de pessoas para produção', 'number', true)}<label className="checkbox"><input type="checkbox" {...register('companions')}/>Quero consultar atendimento para acompanhantes</label></>}</div>}
+ {step === 2 && <div className="form-stack"><p>Uma imagem ajuda a traduzir seu estilo. Compartilhe links do Pinterest, Instagram ou de imagens.</p><label className="field"><span id="references-label">Links de inspiração (opcional)</span><textarea aria-labelledby="references-label" aria-describedby={errors.references ? 'references-hint references-error' : 'references-hint'} {...register('references')} rows={5} placeholder={'https://pinterest.com/...\nhttps://instagram.com/...'} aria-invalid={Boolean(errors.references)}/><small id="references-hint">Adicione um link completo por linha.</small>{error('references')}</label><div className="notice">Prefere enviar fotos? Você poderá compartilhá-las diretamente na conversa do WhatsApp.</div></div>}
+ {step === 3 && <div className="form-stack"><div className="form-row">{input('date', bride ? 'Data do casamento' : 'Data desejada', 'date', true)}{input('time', 'Horário desejado', 'time')}</div>{bride && <div className="form-row">{input('ceremony', 'Horário da cerimônia', 'time')}{input('ready', 'Preciso estar pronta às', 'time')}</div>}<label className="field"><span id="location-label">{bride ? 'Local de preparação' : 'Local de atendimento'} *</span><select aria-labelledby="location-label" {...register('location')} aria-invalid={Boolean(errors.location)}><option value="">Selecione uma opção</option>{['No ateliê', 'Outro endereço (consultar possibilidade)', 'Ainda indefinido'].map(x => <option key={x}>{x}</option>)}</select>{error('location')}</label><p className="notice">A data e o horário informados são apenas uma preferência. A disponibilidade será confirmada pela equipe.</p></div>}
+ {step === 4 && <div className="form-stack">{input('name', 'Como podemos chamar você?', 'text', true)}{input('phone', 'Telefone de contato (opcional)', 'tel')}<label className="field"><span id="notes-label">Observações e preferências adicionais</span><textarea aria-labelledby="notes-label" {...register('notes')} rows={4} placeholder="Conte algum detalhe que gostaria que a equipe soubesse."/></label><p className="privacy">Os dados preenchidos serão incluídos na mensagem que você poderá enviar pelo WhatsApp. Este protótipo mantém as informações apenas durante sua navegação, sem cadastro ou armazenamento permanente.</p></div>}
+ {step === 5 && <><p>Está tudo do seu jeito? Confira antes de preparar sua mensagem.</p><dl className="request-summary">{bookingRows(data).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl><button type="button" className="text-link" onClick={() => move(0)}>Editar minhas escolhas</button></>}
+ {step === 6 && <WhatsAppCTA message={formatBookingMessage(data)}/>}
+ <div className="wizard-actions">{step > 0 ? <button type="button" className="button secondary" onClick={() => move(step - 1)}><ArrowLeft size={16}/>Voltar</button> : <span />}{step < 6 && <button className="button" type="submit">{step === 5 ? 'Preparar mensagem' : 'Continuar'}<ArrowRight size={16}/></button>}</div></form><span className="sr-only" aria-live="polite">Etapa {step + 1}: {steps[step]}</span></section></div>;
+}

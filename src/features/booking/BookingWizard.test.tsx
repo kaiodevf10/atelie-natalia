@@ -1,0 +1,36 @@
+import { fireEvent, render, screen, waitFor, cleanup } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
+import BookingWizard from './BookingWizard';
+afterEach(cleanup);
+describe('Fluxo navegável', () => {
+    it.each(['maquiagem', 'penteado', 'completo', 'noiva'])('conclui o pedido de %s com resumo e mensagem', async service => {
+        render(<MemoryRouter initialEntries={[`/agendar?servico=${service}`]}><BookingWizard /></MemoryRouter>);
+        fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+        await screen.findByRole('heading', { name: 'Seu estilo' });
+        if (service !== 'penteado') fireEvent.click(screen.getByRole('radio', { name: 'Soft glam' }));
+        if (service !== 'maquiagem') fireEvent.click(screen.getByRole('radio', { name: 'Ondas' }));
+        if (service !== 'noiva' && service !== 'penteado') fireEvent.change(screen.getByLabelText('Qual é a ocasião? *'), { target: { value: 'Festa' } });
+        if (service === 'noiva') fireEvent.change(screen.getByLabelText('Quantidade de pessoas para produção *'), { target: { value: '3' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+        await screen.findByRole('heading', { name: 'Referências visuais' });
+        fireEvent.change(screen.getByRole('textbox', { name: 'Links de inspiração (opcional)' }), { target: { value: 'https://pinterest.com/inspiracao' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+        await screen.findByRole('heading', { name: 'Data e local' });
+        fireEvent.change(screen.getByLabelText(service === 'noiva' ? 'Data do casamento *' : 'Data desejada *'), { target: { value: '2099-12-12' } });
+        fireEvent.change(screen.getByLabelText(service === 'noiva' ? 'Local de preparação *' : 'Local de atendimento *'), { target: { value: 'No ateliê' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+        await screen.findByRole('heading', { name: 'Sobre você' });
+        fireEvent.change(screen.getByLabelText('Como podemos chamar você? *'), { target: { value: 'Ana Oliveira' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+        await screen.findByRole('heading', { name: 'Revisão' });
+        expect(screen.getByText('Ana Oliveira')).toBeInTheDocument();
+        expect(screen.getByText('12/12/2099')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Preparar mensagem' }));
+        await screen.findByRole('heading', { name: 'Sua mensagem' });
+        expect(screen.getByText(/Olá! Gostaria de solicitar um atendimento/)).toHaveTextContent('https://pinterest.com/inspiracao');
+        expect(screen.getByRole('button', { name: 'Copiar mensagem' })).toBeInTheDocument();
+    });
+    it('preseleciona noivas e mantém escolhas ao voltar', async () => { render(<MemoryRouter initialEntries={['/agendar?servico=noiva']}><BookingWizard /></MemoryRouter>); expect(screen.getByRole('radio', { name: /Produção para noivas/ })).toBeChecked(); fireEvent.click(screen.getByRole('button', { name: 'Continuar' })); await screen.findByText('Como você imagina sua maquiagem? *'); fireEvent.click(screen.getByRole('radio', { name: 'Soft glam' })); fireEvent.click(screen.getByRole('radio', { name: 'Preso' })); fireEvent.click(screen.getByRole('button', { name: 'Continuar' })); await screen.findByLabelText('Links de inspiração (opcional)'); fireEvent.click(screen.getByRole('button', { name: 'Voltar' })); await waitFor(() => expect(screen.getByRole('radio', { name: 'Soft glam' })).toBeChecked()); });
+    it('impede avançar sem informar o estilo obrigatório', async () => { render(<MemoryRouter><BookingWizard /></MemoryRouter>); fireEvent.click(screen.getByRole('button', { name: 'Continuar' })); await screen.findByLabelText('Qual é a ocasião? *'); fireEvent.click(screen.getByRole('button', { name: 'Continuar' })); expect(await screen.findByText('Escolha um estilo ou peça orientação.')).toBeInTheDocument(); expect(screen.getByText('Selecione a ocasião.')).toBeInTheDocument(); });
+});
